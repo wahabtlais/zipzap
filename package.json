@@ -14,6 +14,8 @@
   },
   "private": true,
   "dependencies": {
+    "@next/font": "^14.2.15",
+    "@tanstack/react-query": "^5.85.5",
     "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
@@ -33,6 +35,8 @@
     "path": "^0.12.7",
     "react": "19.0.0",
     "react-dom": "19.0.0",
+    "react-google-button": "^0.8.0",
+    "react-hook-form": "^7.62.0",
     "swagger-autogen": "^2.23.7",
     "swagger-ui-express": "^5.0.1",
     "validator": "^13.15.15"
