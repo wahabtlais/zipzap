@@ -1,5 +1,8 @@
 "use client";
+import axios from "axios";
+import { AxiosError } from "axios";
 import GoogleButton from "@/shared/components/google-button";
+import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,7 +18,7 @@ type FormData = {
 const SignupPage = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [showOtp, setShowOtp] = useState(true);
+  const [showOtp, setShowOtp] = useState(false);
   const [canResend, setCanResend] = useState(true);
   const [timer, setTimer] = useState(60);
   const [otp, setOtp] = useState(["", "", "", ""]);
@@ -30,7 +33,56 @@ const SignupPage = () => {
     formState: { errors },
   } = useForm<FormData>();
 
-  const onSubmit = (data: FormData) => {};
+  const startResendTimer = () => {
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setCanResend(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const signupMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/user-registration`,
+        data
+      );
+      response.data;
+    },
+    onSuccess: (_, formData) => {
+      setUserData(formData);
+      setShowOtp(true);
+      setCanResend(false);
+      setTimer(60);
+      startResendTimer();
+    },
+  });
+
+  const verifyOtpMutation = useMutation({
+    mutationFn: async () => {
+      if (!userData) return;
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/verify-user`,
+        {
+          ...userData,
+          otp: otp.join(""),
+        }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      router.push("/login");
+    },
+  });
+
+  const onSubmit = (data: FormData) => {
+    signupMutation.mutate(data);
+  };
 
   const handleOtpChange = (index: number, value: string) => {
     if (!/^[0-9]?$/.test(value)) return; // Only allow digits
@@ -55,7 +107,9 @@ const SignupPage = () => {
     }
   };
 
-  const resendOtp = () => {};
+  const resendOtp = () => {
+    if (userData) signupMutation.mutate(userData);
+  };
 
   return (
     <div className="w-full py-10 h-screen min-h-[85vh] bg-[#f1f1f1]">
@@ -135,9 +189,10 @@ const SignupPage = () => {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-all mt-4"
+                  disabled={signupMutation.isPending}
+                  className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-all mt-4 disabled:bg-blue-400"
                 >
-                  Sign Up
+                  {signupMutation.isPending ? "Signin Up..." : "Sign Up"}
                 </button>
                 {serverError && (
                   <p className="text-red-500 text-sm mt-2">{serverError}</p>
@@ -177,8 +232,12 @@ const SignupPage = () => {
                   />
                 ))}
               </div>
-              <button className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-all mt-4">
-                Verify OTP
+              <button
+                className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-all mt-4 disabled:bg-blue-400"
+                disabled={verifyOtpMutation.isPending}
+                onClick={() => verifyOtpMutation.mutate()}
+              >
+                {verifyOtpMutation.isPending ? "Verifying..." : "Verify OTP"}
               </button>
               <p className="text-center text-gray-400 mt-4 text-sm">
                 Didn't receive the code?{" "}
@@ -195,6 +254,13 @@ const SignupPage = () => {
                   </span>
                 )}
               </p>
+              {verifyOtpMutation?.isError &&
+                verifyOtpMutation.error instanceof AxiosError && (
+                  <p className="text-red-500 text-sm mt-2">
+                    {verifyOtpMutation.error.response?.data?.message ||
+                      verifyOtpMutation.error.message}
+                  </p>
+                )}
             </div>
           )}
         </div>
