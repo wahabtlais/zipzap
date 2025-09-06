@@ -11,12 +11,7 @@ import Box from "@mui/material/Box";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
-
-type FormData = {
-  name: string;
-  email: string;
-  password: string;
-};
+import { countries } from "@/utils/Countries";
 
 const SignupPage = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -35,7 +30,7 @@ const SignupPage = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormData>();
+  } = useForm();
 
   const startResendTimer = () => {
     const interval = setInterval(() => {
@@ -84,7 +79,7 @@ const SignupPage = () => {
     },
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = (data: any) => {
     signupMutation.mutate(data);
   };
 
@@ -131,14 +126,16 @@ const SignupPage = () => {
           ))}
         </Stepper>
       </Box>
-      <div className="w-full py-10 h-screen min-h-screen bg-[#f1f1f1]">
-        <div className="w-full flex justify-center">
-          <div className="md:w-[480px] p-8 bg-white shadow rounded-lg">
+
+      {/* Steps Content */}
+      <div className="md:w-[480px] p-8 bg-white shadow rounded-lg">
+        {activeStep === 0 && (
+          <>
             {!showOtp ? (
               <>
                 <form onSubmit={handleSubmit(onSubmit)}>
                   <h3 className="text-2xl font-semibold text-center mb-2">
-                    Sign Up to ZipZap
+                    Create Account
                   </h3>
                   <label className="block text-gray-700 mb-1">Name</label>
                   <input
@@ -171,6 +168,62 @@ const SignupPage = () => {
                   {errors.name && (
                     <p className="text-red-500 text-sm">
                       {String(errors.name.message)}
+                    </p>
+                  )}
+
+                  <label className="block text-gray-700 mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="Ex: +961 03 123 456"
+                    className="border border-gray-300 p-2 rounded-md w-full mb-4 outline-[#4285F4]"
+                    {...register("phone_number", {
+                      required: "Phone Number is required",
+                      pattern: {
+                        value: /^\+?[1-9]\d{1,14}$/,
+                        message: "Invalid phone number",
+                      },
+                      minLength: {
+                        value: 8,
+                        message: "Phone number must be at least 8 digits",
+                      },
+                      maxLength: {
+                        value: 15,
+                        message: "Phone number cannot exceed 15 digits",
+                      },
+                    })}
+                  />
+                  {errors.phone_number && (
+                    <p className="text-red-500 text-sm">
+                      {String(errors.phone_number.message)}
+                    </p>
+                  )}
+
+                  <label className="block text-gray-700 mb-1">Country</label>
+                  <select
+                    className="border border-gray-300 p-2 rounded-md w-full mb-4 outline-[#4285F4] text-gray-900"
+                    {...register("country", {
+                      required: "Country is required",
+                    })}
+                    defaultValue=""
+                  >
+                    <option value="" disabled className="text-gray-400">
+                      Select your country
+                    </option>
+                    {countries.map((country) => (
+                      <option
+                        key={country.code}
+                        value={country.code}
+                        className="text-gray-900"
+                      >
+                        {country.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.country && (
+                    <p className="text-red-500 text-sm">
+                      {String(errors.country.message)}
                     </p>
                   )}
 
@@ -213,6 +266,13 @@ const SignupPage = () => {
                   >
                     {signupMutation.isPending ? "Signin Up..." : "Sign Up"}
                   </button>
+                  {signupMutation.isError &&
+                    signupMutation.error instanceof AxiosError && (
+                      <p className="text-red-500 text-sm">
+                        {signupMutation.error.response?.data?.message ||
+                          signupMutation.error.message}
+                      </p>
+                    )}
                   {serverError && (
                     <p className="text-red-500 text-sm mt-2">{serverError}</p>
                   )}
@@ -282,8 +342,8 @@ const SignupPage = () => {
                   )}
               </div>
             )}
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
