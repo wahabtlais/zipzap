@@ -130,9 +130,9 @@ const SignupPage = () => {
                     required: "Name is required",
                   })}
                 />
-                {errors.email && (
+                {errors.name && (
                   <p className="text-red-500 text-sm">
-                    {String(errors.email.message)}
+                    {String(errors.name.message)}
                   </p>
                 )}
                 <label className="block text-gray-700 mb-1">Email</label>
@@ -149,9 +149,9 @@ const SignupPage = () => {
                     },
                   })}
                 />
-                {errors.name && (
+                {errors.email && (
                   <p className="text-red-500 text-sm">
-                    {String(errors.name.message)}
+                    {String(errors.email.message)}
                   </p>
                 )}
 

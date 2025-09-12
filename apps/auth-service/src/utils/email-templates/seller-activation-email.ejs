@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>ZipZap Activation Email</title>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style type="text/css">
+      /* Base Styles */
+      body {
+        margin: 0;
+        padding: 0;
+        min-width: 100%;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        background-color: #fafafa;
+        color: #222;
+      }
+
+      a {
+        color: #000;
+        text-decoration: none;
+      }
+
+      h1 {
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.25;
+        margin-top: 0;
+        margin-bottom: 15px;
+        text-align: center;
+      }
+
+      p {
+        margin-top: 0;
+        margin-bottom: 24px;
+      }
+
+      table td {
+        vertical-align: top;
+      }
+
+      /* Layout */
+      .email-wrapper {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .email-header {
+        background-color: #0070f3;
+        padding: 24px;
+        color: #fff;
+      }
+
+      .email-body {
+        padding: 24px;
+        background-color: #fff;
+      }
+
+      .email-footer {
+        background-color: #fff;
+        padding: 24px;
+      }
+
+      /* Button */
+      .button {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #0070f3;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: 700;
+        text-align: center;
+        padding: 12px 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-wrapper">
+      <div class="email-header">
+        <h1>Welcome to ZipZap!</h1>
+      </div>
+      <div class="email-body">
+        <p>Hi <%= name %>,</p>
+        <p>
+          Thank you for registering as a seller on ZipZap! We’re thrilled to
+          have you join our marketplace.
+        </p>
+        <p>
+          Here’s your one-time verification code to activate your seller
+          account:
+        </p>
+        <h1><%= otp %></h1>
+        <p>
+          This code will expire in 5 minutes, so please enter it on the
+          activation page to complete your registration.
+        </p>
+        <p>If you didn’t request this, you can safely ignore this email.</p>
+      </div>
+      <div class="email-footer">
+        <p>For any questions, feel free to contact our support team.</p>
+        <p>Wishing you success,</p>
+        <p><strong>The ZipZap Team</strong></p>
+        <p>
+          <a href="https://zipzap.com">Visit ZipZap</a> |
+          <a href="mailto:support@zipzap.com">Contact Support</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

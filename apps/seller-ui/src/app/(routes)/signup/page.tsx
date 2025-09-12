@@ -12,6 +12,7 @@ import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import { countries } from "@/utils/Countries";
+import CreateShop from "@/shared/modules/auth/CreateShop";
 
 const SignupPage = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -21,7 +22,8 @@ const SignupPage = () => {
   const [canResend, setCanResend] = useState(true);
   const [timer, setTimer] = useState(60);
   const [otp, setOtp] = useState(["", "", "", ""]);
-  const [userData, setUserData] = useState<FormData | null>(null);
+  const [sellerData, setSellerData] = useState<FormData | null>(null);
+  const [sellerId, setSellerId] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const router = useRouter();
@@ -48,13 +50,13 @@ const SignupPage = () => {
   const signupMutation = useMutation({
     mutationFn: async (data: FormData) => {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/user-registration`,
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/seller-registration`,
         data
       );
       response.data;
     },
     onSuccess: (_, formData) => {
-      setUserData(formData);
+      setSellerData(formData);
       setShowOtp(true);
       setCanResend(false);
       setTimer(60);
@@ -64,18 +66,19 @@ const SignupPage = () => {
 
   const verifyOtpMutation = useMutation({
     mutationFn: async () => {
-      if (!userData) return;
+      if (!sellerData) return;
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/verify-user`,
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/verify-seller`,
         {
-          ...userData,
+          ...sellerData,
           otp: otp.join(""),
         }
       );
       return response.data;
     },
-    onSuccess: () => {
-      router.push("/login");
+    onSuccess: (data) => {
+      setSellerId(data?.seller?.id);
+      setActiveStep(1);
     },
   });
 
@@ -107,7 +110,7 @@ const SignupPage = () => {
   };
 
   const resendOtp = () => {
-    if (userData) signupMutation.mutate(userData);
+    if (sellerData) signupMutation.mutate(sellerData);
   };
 
   const steps = ["Create Account", "Setup Shop", "Connect Bank"];
@@ -146,9 +149,9 @@ const SignupPage = () => {
                       required: "Name is required",
                     })}
                   />
-                  {errors.email && (
+                  {errors.name && (
                     <p className="text-red-500 text-sm">
-                      {String(errors.email.message)}
+                      {String(errors.name.message)}
                     </p>
                   )}
                   <label className="block text-gray-700 mb-1">Email</label>
@@ -165,9 +168,9 @@ const SignupPage = () => {
                       },
                     })}
                   />
-                  {errors.name && (
+                  {errors.email && (
                     <p className="text-red-500 text-sm">
-                      {String(errors.name.message)}
+                      {String(errors.email.message)}
                     </p>
                   )}
 
@@ -343,6 +346,9 @@ const SignupPage = () => {
               </div>
             )}
           </>
+        )}
+        {activeStep === 1 && (
+          <CreateShop sellerId={sellerId} setActiveStep={setActiveStep} />
         )}
       </div>
     </div>
