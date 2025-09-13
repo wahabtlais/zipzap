@@ -2,7 +2,7 @@
 import axios from "axios";
 import { AxiosError } from "axios";
 import { useMutation } from "@tanstack/react-query";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useRef, useState } from "react";
@@ -15,7 +15,7 @@ import { countries } from "@/utils/Countries";
 import CreateShop from "@/shared/modules/auth/CreateShop";
 
 const SignupPage = () => {
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeStep, setActiveStep] = useState(2);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [showOtp, setShowOtp] = useState(false);
@@ -349,6 +349,54 @@ const SignupPage = () => {
         )}
         {activeStep === 1 && (
           <CreateShop sellerId={sellerId} setActiveStep={setActiveStep} />
+        )}
+        {activeStep === 2 && (
+          <div>
+            <div className="flex justify-center mb-4">
+              <img
+                src="/images/logo.png"
+                alt="Logo"
+                className="w-[50px] h-[50px] shadow-md rounded-full"
+              />
+              <img
+                src="/images/stripe_logo.png"
+                alt="Stripe Logo"
+                className="w-[50px] h-[50px] shadow-md rounded-full -ml-3"
+              />
+            </div>
+            <h3 className="text-2xl font-medium text-center mb-4">
+              ZipZap uses <span className="text-blue-600">Stripe</span> to
+              connect your bank account.
+            </h3>
+            <div className="bg-gray-100 p-3 rounded-lg mb-4">
+              <div className="flex gap-3 mb-3">
+                <Share2 width={18} color="#2563eb" />
+                <div>
+                  <h4 className="font-semibold text-base">
+                    Connect effortlessly
+                  </h4>
+                  <p className="text-sm text-gray-500 font-light">
+                    Stripe lets you connect your financial accounts in seconds.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <EyeOff width={21} color="#2563eb" />
+                <div>
+                  <h4 className="font-semibold text-base">
+                    Your data belongs to you
+                  </h4>
+                  <p className="text-sm text-gray-500 font-light">
+                    Stripe takes your privacy seriously and is committed to
+                    protecting your data.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <button className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-all mt-4 disabled:bg-blue-400">
+              Connect with Stripe
+            </button>
+          </div>
         )}
       </div>
     </div>
