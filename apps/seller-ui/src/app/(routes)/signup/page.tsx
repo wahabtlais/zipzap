@@ -4,7 +4,6 @@ import { AxiosError } from "axios";
 import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff, Share2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import React, { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import Box from "@mui/material/Box";
@@ -15,7 +14,7 @@ import { countries } from "@/utils/Countries";
 import CreateShop from "@/shared/modules/auth/CreateShop";
 
 const SignupPage = () => {
-  const [activeStep, setActiveStep] = useState(2);
+  const [activeStep, setActiveStep] = useState(0);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [showOtp, setShowOtp] = useState(false);
@@ -25,8 +24,6 @@ const SignupPage = () => {
   const [sellerData, setSellerData] = useState<FormData | null>(null);
   const [sellerId, setSellerId] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  const router = useRouter();
 
   const {
     register,
@@ -114,6 +111,23 @@ const SignupPage = () => {
   };
 
   const steps = ["Create Account", "Setup Shop", "Connect Bank"];
+
+  const connectStripe = async () => {
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/create-stripe-link`,
+        {
+          sellerId,
+        }
+      );
+
+      if (response.data.url) {
+        window.location.href = response.data.url;
+      }
+    } catch (error) {
+      console.log("Stripe Connection Error", error);
+    }
+  };
 
   return (
     <div className="w-full flex flex-col items-center min-h-screen">
@@ -393,7 +407,10 @@ const SignupPage = () => {
                 </div>
               </div>
             </div>
-            <button className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-all mt-4 disabled:bg-blue-400">
+            <button
+              className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-all mt-4 disabled:bg-blue-400"
+              onClick={connectStripe}
+            >
               Connect with Stripe
             </button>
           </div>

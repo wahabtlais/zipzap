@@ -7,12 +7,6 @@ export const metadata = {
   description: "Your one-stop solution for all your needs",
 };
 
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["100", "300", "400", "500", "700", "900"],
-  variable: "--font-roboto",
-});
-
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -26,7 +20,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${roboto.variable} ${poppins.variable}`}>
+      <body
+        className={`min-h-screen bg-slate-900 antialiased ${poppins.variable}`}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>
