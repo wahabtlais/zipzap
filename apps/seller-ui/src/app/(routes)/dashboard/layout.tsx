@@ -5,7 +5,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex h-full min-h-screen">
       {/* Sidebar */}
-      <aside className="w-[280px] min-w-[250px] max-w-[300px] border-r border-r-slate-800 text-white p-4 bg-slate-950">
+      <aside className="w-[280px] min-w-[250px] max-w-[300px] border-r border-r-slate-800 text-white p-4 bg-black/90 backdrop-blur-sm">
         <div className="sticky top-0">
           <SidebarWrapper />
         </div>
