@@ -4,6 +4,9 @@ import { ChevronRight } from "lucide-react";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import Input from "../../../../../../../packages/components/input";
+import ColorSelector from "../../../../../../../packages/components/colorSelector";
+import CustomSpecifications from "../../../../../../../packages/components/customSpecifications";
+import CustomProperties from "../../../../../../../packages/components/customProperties";
 
 const CreateProduct = () => {
   const {
@@ -155,6 +158,102 @@ const CreateProduct = () => {
                   </p>
                 )}
               </div>
+
+              <div className="mt-2">
+                <Input
+                  label="Warranty *"
+                  placeholder="1 Year / No Warranty"
+                  className="bg-transparent"
+                  {...register("warranty", {
+                    required: "Warranty is required!",
+                  })}
+                />
+                {errors.warranty && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.warranty.message as string}
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-2">
+                <Input
+                  label="Slug *"
+                  placeholder="product-slug"
+                  {...register("slug", {
+                    required: "Slug is required!",
+                    pattern: {
+                      value: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+                      message:
+                        "Invalid slug format. Use lowercase letters, numbers, and hyphens only.",
+                    },
+                    minLength: {
+                      value: 3,
+                      message: "Slug must be at least 3 characters long.",
+                    },
+                    maxLength: {
+                      value: 50,
+                      message: "Slug must be at most 50 characters long.",
+                    },
+                  })}
+                />
+                {errors.slug && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.slug.message as string}
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-2">
+                <Input
+                  label="Brand"
+                  placeholder="Ex: Apple"
+                  {...register("brand")}
+                />
+                {errors.brand && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.brand.message as string}
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-2">
+                <ColorSelector control={control} errors={errors} />
+              </div>
+              <div className="mt-2">
+                <CustomSpecifications control={control} errors={errors} />
+              </div>
+              <div className="mt-2">
+                <CustomProperties control={control} errors={errors} />
+              </div>
+              <div className="mt-2">
+                <label className="block font-semibold text-gray-300 mb-1">
+                  Cash on Delivery Available *
+                </label>
+                <select
+                  {...register("cash_on_delivery", {
+                    required: "Cash on Delivery is required",
+                  })}
+                  defaultValue="yes"
+                  className="w-full border outline border-gray-700 bg-transparent p-1 rounded-md text-white"
+                >
+                  <option value="yes" className="bg-black">
+                    Yes
+                  </option>
+                  <option value="no" className="bg-black">
+                    No
+                  </option>
+                </select>
+                {errors.cash_on_delivery && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.cash_on_delivery.message as string}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="w-2/4">
+              <label className="block font-semibold text-gray-300 mb-1">
+                Category *
+              </label>
             </div>
           </div>
         </div>
