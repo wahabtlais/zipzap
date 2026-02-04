@@ -1,0 +1,58 @@
+.rte-dark {
+  border: 1px solid #3f3f46;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+/* Toolbar */
+.rte-dark .ql-toolbar {
+  background: #020617;
+  border: none;
+  border-bottom: 1px solid #3f3f46;
+}
+
+.rte-dark .ql-toolbar button,
+.rte-dark .ql-toolbar .ql-picker {
+  color: #e5e7eb;
+}
+
+/* Editor container */
+.rte-dark .ql-container {
+  border: none;
+  background: transparent;
+  color: #e5e7eb;
+  font-size: 15px;
+}
+
+.rte-dark .ql-editor {
+  min-height: 220px;
+  padding: 16px;
+  line-height: 1.7;
+}
+
+.rte-dark .ql-editor.ql-blank::before {
+  color: #94a3b8;
+}
+
+/* Picker dropdown */
+.rte-dark .ql-picker-options {
+  background: #020617;
+  border: 1px solid #3f3f46;
+}
+
+/* Icons */
+.rte-dark .ql-stroke {
+  stroke: #e5e7eb;
+}
+.rte-dark .ql-fill {
+  fill: #e5e7eb;
+}
+
+/* Code block */
+.rte-dark pre {
+  background: #020617;
+  color: #e5e7eb;
+  padding: 12px;
+  border-radius: 8px;
+}
