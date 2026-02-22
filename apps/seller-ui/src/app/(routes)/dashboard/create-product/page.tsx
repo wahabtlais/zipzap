@@ -296,16 +296,16 @@ const CreateProduct = () => {
                   render={({ field }) => (
                     <select
                       {...field}
-                      className="w-full border outline border-gray-700 bg-transparent p-1 rounded-md text-white"
+                      className="w-full border outline-none border-gray-700 bg-transparent p-1 rounded-md text-white"
                     >
-                      <option value="" className="bg-black">
+                      <option value="" className="bg-gray-800">
                         Select a category
                       </option>
                       {categories.map((category: string) => (
                         <option
                           key={category}
                           value={category}
-                          className="bg-black"
+                          className="bg-gray-800"
                         >
                           {category}
                         </option>
