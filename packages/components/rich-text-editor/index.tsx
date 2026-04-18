@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from "react";
 import ReactQuill from "react-quill-new";
 // @ts-ignore

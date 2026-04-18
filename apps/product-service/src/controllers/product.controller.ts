@@ -4,6 +4,7 @@ import {
   NotFoundError,
   ValidationError,
 } from "../../../../packages/error-handler";
+import { imagekit } from "../../../../packages/libs/imagekit";
 
 // Get product categrories
 export const getCategories = async (
@@ -125,6 +126,51 @@ export const deleteDiscountCode = async (
     return res.status(200).json({
       success: true,
       message: "Discount code deleted successfully!",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Upload product images
+export const uploadProductImage = async (
+  req: any,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { fileName } = req.body;
+
+    // fileName is a base64 string, we need to extract the base64 data from it.
+    const base64Data = fileName.split(",")[1];
+
+    const response = await imagekit.upload({
+      file: base64Data,
+      fileName: `product-${Date.now()}.jpg`,
+      folder: "/products",
+    });
+
+    res.status(201).json({
+      file_url: response.url,
+      fileId: response.fileId,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Delete product image
+export const deleteProductImage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { fileId } = req.body;
+    const response = await imagekit.deleteFile(fileId);
+    res.status(201).json({
+      success: true,
+      response,
     });
   } catch (error) {
     next(error);

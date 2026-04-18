@@ -19,8 +19,8 @@ app.use(
 );
 
 app.use(morgan("dev"));
-app.use(express.json({ limit: "100mb" }));
-app.use(express.urlencoded({ limit: "100mb", extended: true }));
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ limit: "25mb", extended: true }));
 app.use(cookieParser());
 app.set("trust proxy", 1);
 
@@ -48,7 +48,7 @@ app.get("/gateway-health", (req, res) => {
   res.send({ message: "Welcome to api-gateway!" });
 });
 
-app.use("/product", proxy("http://localhost:6002"));
+app.use("/product", proxy("http://localhost:6002", { limit: "25mb" }));
 app.use("/", proxy("http://localhost:6001"));
 
 const port = process.env.PORT || 8080;

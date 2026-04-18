@@ -1,8 +1,8 @@
 "use client";
 import ImagePlaceholder from "@/shared/components/image-placeholder";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
 import React, { useMemo, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, set, useForm } from "react-hook-form";
 import Input from "../../../../../../../packages/components/input";
 import ColorSelector from "../../../../../../../packages/components/colorSelector";
 import CustomSpecifications from "../../../../../../../packages/components/customSpecifications";
@@ -11,6 +11,12 @@ import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/utils/axiosInstance";
 import RichTextEditor from "../../../../../../../packages/components/rich-text-editor";
 import SizeSelector from "../../../../../../../packages/components/sizeSelector";
+import Image from "next/image";
+
+interface UploadedImage {
+  fileId: string;
+  file_url: string;
+}
 
 const CreateProduct = () => {
   const {
@@ -24,7 +30,9 @@ const CreateProduct = () => {
 
   const [openImageModal, setOpenImageModal] = useState(false);
   const [isChanged, setIsChanged] = useState(true);
-  const [images, setImages] = useState<(File | null)[]>([null]);
+  const [selectedImage, setSelectedImage] = useState("");
+  const [pictureUploadingLoader, setPictureUploadingLoader] = useState(false);
+  const [images, setImages] = useState<(UploadedImage | null)[]>([null]);
   const [loading, setLoading] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
@@ -41,6 +49,14 @@ const CreateProduct = () => {
     retry: 2,
   });
 
+  const { data: discountCodes = [], isLoading: discountLoading } = useQuery({
+    queryKey: ["shop-discounts"],
+    queryFn: async () => {
+      const res = await axiosInstance.get("/product/api/get-discount-codes");
+      return res?.data?.discount_codes || [];
+    },
+  });
+
   const categories = data?.categories || [];
   const subCategoriesData = data?.subCategories || {};
 
@@ -55,35 +71,73 @@ const CreateProduct = () => {
     console.log(data);
   };
 
-  const handleImageChange = (file: File | null, index: number) => {
-    const updatedImages = [...images];
-    updatedImages[index] = file;
-
-    if (index === images.length - 1 && images.length < 8) {
-      updatedImages.push(null);
-    }
-
-    setImages(updatedImages);
-    setValue("images", updatedImages);
+  const convertFileToBase64 = (file: File) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
   };
 
-  const handleRemoveImage = (index: number) => {
-    setImages((prevImages) => {
-      let updatedImages = [...prevImages];
+  const handleImageChange = async (file: File | null, index: number) => {
+    if (!file) return;
+    setPictureUploadingLoader(true);
 
-      if (index === -1) {
-        updatedImages[0] = null;
-      } else {
-        updatedImages.splice(index, 1);
+    try {
+      const fileName = await convertFileToBase64(file);
+      const response = await axiosInstance.post(
+        "/product/api/upload-product-image",
+        { fileName },
+      );
+
+      const uploadedImaes: UploadedImage = {
+        fileId: response.data.fileId,
+        file_url: response.data.file_url,
+      };
+
+      const updatedImages = [...images];
+
+      updatedImages[index] = uploadedImaes;
+
+      if (index === images.length - 1 && images.length < 8) {
+        updatedImages.push(null);
       }
 
-      if (!updatedImages.includes(null) && updatedImages.length < 8)
+      setImages(updatedImages);
+      setValue("images", updatedImages);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setPictureUploadingLoader(false);
+    }
+  };
+
+  const handleRemoveImage = async (index: number) => {
+    try {
+      const updatedImages = [...images];
+      const imageToDelete = updatedImages[index];
+
+      if (imageToDelete && typeof imageToDelete === "object") {
+        await axiosInstance.delete("/product/api/delete-product-image", {
+          data: {
+            fileId: imageToDelete.fileId!,
+          },
+        });
+      }
+
+      updatedImages.splice(index, 1);
+
+      // Ensure there's always at least one placeholder
+      if (!updatedImages.includes(null) && updatedImages.length < 8) {
         updatedImages.push(null);
+      }
 
-      return updatedImages;
-    });
-
-    setValue("images", images);
+      setImages(updatedImages);
+      setValue("images", updatedImages);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleSaveDraft = () => {};
@@ -112,8 +166,11 @@ const CreateProduct = () => {
               setOpenImageModal={setOpenImageModal}
               size="765 x 850"
               small={false}
+              images={images}
+              pictureUploadingLoader={pictureUploadingLoader}
               index={0}
               onImageChange={handleImageChange}
+              setSelectedImage={setSelectedImage}
               onRemove={handleRemoveImage}
             />
           )}
@@ -123,9 +180,12 @@ const CreateProduct = () => {
                 setOpenImageModal={setOpenImageModal}
                 size="765 x 850"
                 small={true}
+                images={images}
+                pictureUploadingLoader={pictureUploadingLoader}
                 key={index}
                 index={index + 1}
                 onImageChange={handleImageChange}
+                setSelectedImage={setSelectedImage}
                 onRemove={handleRemoveImage}
               />
             ))}
@@ -331,7 +391,7 @@ const CreateProduct = () => {
                   render={({ field }) => (
                     <select
                       {...field}
-                      className="w-full border outline border-gray-700 bg-transparent p-1 rounded-md text-white"
+                      className="w-full border outline-none border-gray-700 bg-transparent p-1 rounded-md text-white"
                     >
                       <option value="" className="bg-black">
                         Select Subcategory
@@ -487,11 +547,68 @@ const CreateProduct = () => {
                 <label className="block font-semibold text-gray-300 mb-1">
                   Select Discount Codes (optional)
                 </label>
+                {discountLoading ? (
+                  <p className="text-gray-400">Loading discount codes...</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {discountCodes?.map((code: any) => (
+                      <button
+                        type="button"
+                        className={`px-3 py-1 rounded-md text-sm font-semibold border ${
+                          watch("discountCodes")?.includes(code.id)
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700"
+                        }`}
+                        onClick={() => {
+                          const currentSelection = watch("discountCodes") || [];
+                          const updatedSelection = currentSelection?.includes(
+                            code.id,
+                          )
+                            ? currentSelection.filer(
+                                (id: string) => id !== code.id,
+                              )
+                            : [...currentSelection, code.id];
+                          setValue("discountCodes", updatedSelection);
+                        }}
+                      >
+                        {code?.public_name} ({code.discountValue}
+                        {code.discountType === "percentage" ? "%" : "$"})
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {openImageModal && (
+        <div className="fixed top-0 left-0 w-full flex items-center justify-center bg-black bg-opacity-50 h-full z-50">
+          <div className="bg-gray-800 p-6 rounded-lg w-[450px] text-white ">
+            <div className="flex justify-between items-center pb-3 mb-4">
+              <h2 className="text-lg font-semibold">Enhance Product Image</h2>
+              <X
+                size={20}
+                className="cursor-pointer"
+                onClick={() => setOpenImageModal(!openImageModal)}
+              />
+            </div>
+            <div className="relative w-full h-[250px] rounded-md overflow-hidden border border-gray-600">
+              <Image src={selectedImage} alt="Selected image" layout="fill" />
+            </div>
+            {selectedImage && (
+              <div className="mt-4 space-y-2">
+                <h3 className="text-white text-sm font-semibold">
+                  AI Enhancement
+                </h3>
+                <div className="grid grid-cols-2 gap-3 max-h-[250px] overflow-y-auto"></div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 flex justify-end gap-3">
         {isChanged && (
           <button
