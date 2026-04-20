@@ -1,6 +1,6 @@
 "use client";
 import ImagePlaceholder from "@/shared/components/image-placeholder";
-import { ChevronRight, X } from "lucide-react";
+import { ChevronRight, Loader2, Wand, X } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { Controller, set, useForm } from "react-hook-form";
 import Input from "../../../../../../../packages/components/input";
@@ -12,6 +12,7 @@ import axiosInstance from "@/utils/axiosInstance";
 import RichTextEditor from "../../../../../../../packages/components/rich-text-editor";
 import SizeSelector from "../../../../../../../packages/components/sizeSelector";
 import Image from "next/image";
+import { enhancements } from "@/utils/ai.enhancements";
 
 interface UploadedImage {
   fileId: string;
@@ -34,6 +35,9 @@ const CreateProduct = () => {
   const [pictureUploadingLoader, setPictureUploadingLoader] = useState(false);
   const [images, setImages] = useState<(UploadedImage | null)[]>([null]);
   const [loading, setLoading] = useState(false);
+  const [activeEffect, setActiveEffect] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const [originalImage, setOriginalImage] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["categories"],
@@ -91,14 +95,14 @@ const CreateProduct = () => {
         { fileName },
       );
 
-      const uploadedImaes: UploadedImage = {
+      const uploadedImages: UploadedImage = {
         fileId: response.data.fileId,
         file_url: response.data.file_url,
       };
 
       const updatedImages = [...images];
 
-      updatedImages[index] = uploadedImaes;
+      updatedImages[index] = uploadedImages;
 
       if (index === images.length - 1 && images.length < 8) {
         updatedImages.push(null);
@@ -106,6 +110,7 @@ const CreateProduct = () => {
 
       setImages(updatedImages);
       setValue("images", updatedImages);
+      handleImageSelect(uploadedImages.file_url);
     } catch (error) {
       console.log(error);
     } finally {
@@ -138,6 +143,38 @@ const CreateProduct = () => {
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const handleImageSelect = (url: string) => {
+    setOriginalImage(url);
+    setSelectedImage(url);
+    setActiveEffect(null);
+  };
+
+  const applyTransformation = async (transformation: string) => {
+    if (!selectedImage || processing) return;
+
+    if (activeEffect === transformation) {
+      setSelectedImage(originalImage!);
+      setActiveEffect(null);
+      return;
+    }
+    setProcessing(true);
+    setActiveEffect(transformation);
+
+    try {
+      const transformedUrl = `${originalImage}?tr=${transformation}`;
+      setSelectedImage(transformedUrl);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const resetTransformation = () => {
+    setSelectedImage(originalImage!);
+    setActiveEffect(null);
   };
 
   const handleSaveDraft = () => {};
@@ -595,14 +632,65 @@ const CreateProduct = () => {
               />
             </div>
             <div className="relative w-full h-[250px] rounded-md overflow-hidden border border-gray-600">
-              <Image src={selectedImage} alt="Selected image" layout="fill" />
+              <img
+                src={selectedImage}
+                alt="Selected image"
+                className="w-full h-full object-cover"
+              />
             </div>
             {selectedImage && (
               <div className="mt-4 space-y-2">
-                <h3 className="text-white text-sm font-semibold">
-                  AI Enhancement
-                </h3>
-                <div className="grid grid-cols-2 gap-3 max-h-[250px] overflow-y-auto"></div>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-white text-sm font-semibold">
+                    AI Enhancement
+                  </h3>
+                  {activeEffect && (
+                    <button
+                      onClick={resetTransformation}
+                      className="text-xs text-gray-400 hover:text-white transition-all underline"
+                      disabled={processing}
+                    >
+                      Reset to Original
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 max-h-[250px] overflow-y-auto">
+                  {enhancements.map(({ label, effect }) => {
+                    const isActive = activeEffect === effect;
+                    const isDisabled =
+                      processing || (activeEffect !== null && !isActive);
+
+                    return (
+                      <button
+                        key={effect}
+                        className={`p-2 rounded-md flex items-center gap-2 transition-all
+              ${
+                isActive
+                  ? "bg-blue-600 text-white"
+                  : isDisabled
+                    ? "bg-gray-800 text-gray-500 cursor-not-allowed opacity-50"
+                    : "bg-gray-700 hover:bg-gray-600 text-white"
+              }`}
+                        onClick={() => applyTransformation(effect)}
+                        disabled={isDisabled}
+                      >
+                        {processing && isActive ? (
+                          <Loader2 size={18} className="animate-spin" />
+                        ) : (
+                          <Wand size={18} />
+                        )}
+                        {isActive ? `✓ ${label}` : label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {activeEffect && (
+                  <p className="text-xs text-gray-400 text-center">
+                    Click the active effect again or "Reset" to remove it
+                  </p>
+                )}
               </div>
             )}
           </div>
