@@ -10,6 +10,7 @@ import {
   Search,
   Pencil,
   Trash,
+  RotateCcw,
   Eye,
   Plus,
   BarChart,
@@ -20,10 +21,19 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "@/utils/axiosInstance";
 import Image from "next/image";
+import DeleteConfirmationModal from "@/shared/components/modals/delete.confirmation";
 
 const fetchProducts = async () => {
   const res = await axiosInstance.get("/product/api/get-shop-products");
   return res?.data?.products;
+};
+
+const deleteProduct = async (productId: string) => {
+  await axiosInstance.delete(`/product/api/delete-product/${productId}`);
+};
+
+const restoreProduct = async (productId: string) => {
+  await axiosInstance.put(`/product/api/restore-product/${productId}`);
 };
 
 const ProductsList = () => {
@@ -41,18 +51,40 @@ const ProductsList = () => {
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
+  // Delete Product Mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shop-products"] });
+      setShowDeleteModal(false);
+    },
+  });
+
+  // Restore Product Mutation
+  const restoreMutation = useMutation({
+    mutationFn: restoreProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shop-products"] });
+      setShowDeleteModal(false);
+    },
+  });
+
   const columns = useMemo(
     () => [
       {
         accessorKey: "image",
         header: "Image",
-        cell: ({ row }: any) => (
-          <Image
-            src={row.original.image}
-            alt={row.original.image}
-            className="w-12 h-12 rounded-md object-cover"
-          />
-        ),
+        cell: ({ row }: any) => {
+          return (
+            <Image
+              src={row.original.images[0].url}
+              alt={row.original.images[0].url}
+              height={200}
+              width={200}
+              className="w-12 h-12 rounded-md object-cover"
+            />
+          );
+        },
       },
       {
         accessorKey: "name",
@@ -99,8 +131,8 @@ const ProductsList = () => {
         header: "Rating",
         cell: ({ row }: any) => (
           <div className="flex items-center gap-1 text-yellow-400">
-            <Star fill="#fde047" size={18} />{" "}
-            <span className="text-white">{row.original.ratings || 0}</span>
+            <Star fill="#fde047" size={15} />{" "}
+            <span className="text-white pt-1">{row.original.ratings || 0}</span>
           </div>
         ),
       },
@@ -127,10 +159,24 @@ const ProductsList = () => {
               <BarChart size={18} />
             </button>
             <button
-              className="text-red-400 hover:text-red-300 transition"
-              // onClick={() => openDeleteModal(row.original)}
+              className={`transition ${
+                row.original.isDeleted
+                  ? "text-green-400 hover:text-green-300"
+                  : "text-red-400 hover:text-red-300"
+              }`}
+              onClick={() => openDeleteModal(row.original)}
+              aria-label={
+                row.original.isDeleted ? "Restore product" : "Delete product"
+              }
+              title={
+                row.original.isDeleted ? "Restore product" : "Delete product"
+              }
             >
-              <Trash size={18} />
+              {row.original.isDeleted ? (
+                <RotateCcw size={18} />
+              ) : (
+                <Trash size={18} />
+              )}
             </button>
           </div>
         ),
@@ -148,6 +194,11 @@ const ProductsList = () => {
     state: { globalFilter },
     onGlobalFilterChange: setGlobalFilter,
   });
+
+  const openDeleteModal = (product: any) => {
+    setSelectedProduct(product);
+    setShowDeleteModal(true);
+  };
 
   return (
     <div className="w-full min-h-screen p-8">
@@ -223,6 +274,14 @@ const ProductsList = () => {
               ))}
             </tbody>
           </table>
+        )}
+        {showDeleteModal && (
+          <DeleteConfirmationModal
+            product={selectedProduct}
+            onClose={() => setShowDeleteModal(false)}
+            onConfirm={() => deleteMutation.mutate(selectedProduct?.id)}
+            onRestore={() => restoreMutation.mutate(selectedProduct?.id)}
+          />
         )}
       </div>
     </div>

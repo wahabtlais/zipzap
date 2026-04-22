@@ -13,7 +13,7 @@ const DeleteDiscountCodeModal = ({
   isDeleting?: boolean;
 }) => {
   return (
-    <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="fixed top-0 left-0 h-full w-full bg-black bg-opacity-50 flex items-center justify-center">
       <div className="bg-gray-800 p-6 rounded-lg w-[450px] shadow-lg">
         {/* Header */}
         <div className="flex justify-between items-center border-b border-gray-700 pb-3">
