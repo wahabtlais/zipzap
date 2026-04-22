@@ -1,6 +1,11 @@
 import { Pencil, WandSparkles, X } from "lucide-react";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
+interface UploadedImage {
+  fileId: string;
+  file_url: string;
+}
 
 const ImagePlaceholder = ({
   size,
@@ -22,10 +27,16 @@ const ImagePlaceholder = ({
   defaultImage?: string | null;
   setSelectedImage: (image: string) => void;
   index?: any;
-  images: any;
+  images: (UploadedImage | null)[];
   setOpenImageModal: (openImageModal: boolean) => void;
 }) => {
   const [imagePreview, setImagePreview] = useState<string | null>(defaultImage);
+  const uploadedImage = index !== null ? images[index] : null;
+  const uploadedImageUrl = uploadedImage?.file_url || null;
+
+  useEffect(() => {
+    setImagePreview(uploadedImageUrl || defaultImage);
+  }, [defaultImage, uploadedImageUrl]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -54,17 +65,22 @@ const ImagePlaceholder = ({
           <button
             type="button"
             disabled={pictureUploadingLoader}
-            onClick={() => onRemove?.(index!)}
+            onClick={() => {
+              setImagePreview(null);
+              onRemove?.(index!);
+            }}
             className="absolute top-3 right-3 p-2 !rounded bg-red-600 shadow-lg disabled:bg-red-400 cursor-pointer disabled:cursor-not-allowed "
           >
             <X size={16} />
           </button>
           <button
+            type="button"
             disabled={pictureUploadingLoader}
             className="absolute top-3 right-[70px] p-2 !rounded bg-blue-500 shadow-lg cursor-pointer disabled:bg-blue-300 disabled:cursor-not-allowed"
             onClick={() => {
+              if (!uploadedImageUrl) return;
               setOpenImageModal(true);
-              setSelectedImage(images[index].file_url);
+              setSelectedImage(uploadedImageUrl);
             }}
           >
             <WandSparkles size={16} />

@@ -2,7 +2,7 @@
 import ImagePlaceholder from "@/shared/components/image-placeholder";
 import { ChevronRight, Loader2, Wand, X } from "lucide-react";
 import React, { useMemo, useState } from "react";
-import { Controller, set, useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import Input from "../../../../../../../packages/components/input";
 import ColorSelector from "../../../../../../../packages/components/colorSelector";
 import CustomSpecifications from "../../../../../../../packages/components/customSpecifications";
@@ -11,13 +11,22 @@ import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/utils/axiosInstance";
 import RichTextEditor from "../../../../../../../packages/components/rich-text-editor";
 import SizeSelector from "../../../../../../../packages/components/sizeSelector";
-import Image from "next/image";
 import { enhancements } from "@/utils/ai.enhancements";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 interface UploadedImage {
   fileId: string;
   file_url: string;
 }
+
+const normalizeImageSlots = (imageSlots: (UploadedImage | null)[]) => {
+  const uploadedImages = imageSlots.filter(
+    (image): image is UploadedImage => image !== null,
+  );
+
+  return uploadedImages.length < 8 ? [...uploadedImages, null] : uploadedImages;
+};
 
 const CreateProduct = () => {
   const {
@@ -30,14 +39,17 @@ const CreateProduct = () => {
   } = useForm();
 
   const [openImageModal, setOpenImageModal] = useState(false);
-  const [isChanged, setIsChanged] = useState(true);
+  const [isChanged] = useState(true);
   const [selectedImage, setSelectedImage] = useState("");
   const [pictureUploadingLoader, setPictureUploadingLoader] = useState(false);
   const [images, setImages] = useState<(UploadedImage | null)[]>([null]);
   const [loading, setLoading] = useState(false);
   const [activeEffect, setActiveEffect] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [previewImageLoading, setPreviewImageLoading] = useState(false);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
+
+  const router = useRouter();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["categories"],
@@ -71,8 +83,16 @@ const CreateProduct = () => {
     return selectedCategory ? subCategoriesData[selectedCategory] || [] : [];
   }, [selectedCategory, subCategoriesData]);
 
-  const onSubmit = (data: any) => {
-    console.log(data);
+  const onSubmit = async (data: any) => {
+    try {
+      setLoading(true);
+      await axiosInstance.post("/product/api/create-product", data);
+      router.push("/dashboard/all-products");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to create product");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const convertFileToBase64 = (file: File) => {
@@ -100,13 +120,11 @@ const CreateProduct = () => {
         file_url: response.data.file_url,
       };
 
-      const updatedImages = [...images];
-
-      updatedImages[index] = uploadedImages;
-
-      if (index === images.length - 1 && images.length < 8) {
-        updatedImages.push(null);
-      }
+      const updatedImages = normalizeImageSlots(
+        images.map((image, imageIndex) =>
+          imageIndex === index ? uploadedImages : image,
+        ),
+      );
 
       setImages(updatedImages);
       setValue("images", updatedImages);
@@ -120,8 +138,7 @@ const CreateProduct = () => {
 
   const handleRemoveImage = async (index: number) => {
     try {
-      const updatedImages = [...images];
-      const imageToDelete = updatedImages[index];
+      const imageToDelete = images[index];
 
       if (imageToDelete && typeof imageToDelete === "object") {
         await axiosInstance.delete("/product/api/delete-product-image", {
@@ -131,15 +148,19 @@ const CreateProduct = () => {
         });
       }
 
-      updatedImages.splice(index, 1);
-
-      // Ensure there's always at least one placeholder
-      if (!updatedImages.includes(null) && updatedImages.length < 8) {
-        updatedImages.push(null);
-      }
+      const updatedImages = normalizeImageSlots(
+        images.filter((_, imageIndex) => imageIndex !== index),
+      );
 
       setImages(updatedImages);
       setValue("images", updatedImages);
+
+      if (imageToDelete?.file_url === originalImage) {
+        setOriginalImage(null);
+        setSelectedImage("");
+        setActiveEffect(null);
+        setOpenImageModal(false);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -149,17 +170,21 @@ const CreateProduct = () => {
     setOriginalImage(url);
     setSelectedImage(url);
     setActiveEffect(null);
+    setPreviewImageLoading(false);
   };
 
   const applyTransformation = async (transformation: string) => {
     if (!selectedImage || processing) return;
 
     if (activeEffect === transformation) {
+      setProcessing(true);
+      setPreviewImageLoading(true);
       setSelectedImage(originalImage!);
       setActiveEffect(null);
       return;
     }
     setProcessing(true);
+    setPreviewImageLoading(true);
     setActiveEffect(transformation);
 
     try {
@@ -167,12 +192,13 @@ const CreateProduct = () => {
       setSelectedImage(transformedUrl);
     } catch (error) {
       console.log(error);
-    } finally {
       setProcessing(false);
     }
   };
 
   const resetTransformation = () => {
+    setProcessing(true);
+    setPreviewImageLoading(true);
     setSelectedImage(originalImage!);
     setActiveEffect(null);
   };
@@ -207,7 +233,7 @@ const CreateProduct = () => {
               pictureUploadingLoader={pictureUploadingLoader}
               index={0}
               onImageChange={handleImageChange}
-              setSelectedImage={setSelectedImage}
+              setSelectedImage={handleImageSelect}
               onRemove={handleRemoveImage}
             />
           )}
@@ -222,7 +248,7 @@ const CreateProduct = () => {
                 key={index}
                 index={index + 1}
                 onImageChange={handleImageChange}
-                setSelectedImage={setSelectedImage}
+                setSelectedImage={handleImageSelect}
                 onRemove={handleRemoveImage}
               />
             ))}
@@ -251,7 +277,7 @@ const CreateProduct = () => {
                   cols={10}
                   label="Short Description * (Max 150 words)"
                   placeholder="Enter product description for quick view"
-                  {...register("description", {
+                  {...register("short_description", {
                     required: "Description is required",
                     validate: (value) => {
                       const wordCount = value.trim().split(/\s+/).length;
@@ -590,6 +616,7 @@ const CreateProduct = () => {
                   <div className="flex flex-wrap gap-2">
                     {discountCodes?.map((code: any) => (
                       <button
+                        key={code.id}
                         type="button"
                         className={`px-3 py-1 rounded-md text-sm font-semibold border ${
                           watch("discountCodes")?.includes(code.id)
@@ -601,7 +628,7 @@ const CreateProduct = () => {
                           const updatedSelection = currentSelection?.includes(
                             code.id,
                           )
-                            ? currentSelection.filer(
+                            ? currentSelection.filter(
                                 (id: string) => id !== code.id,
                               )
                             : [...currentSelection, code.id];
@@ -619,7 +646,6 @@ const CreateProduct = () => {
           </div>
         </div>
       </div>
-
       {openImageModal && (
         <div className="fixed top-0 left-0 w-full flex items-center justify-center bg-black bg-opacity-50 h-full z-50">
           <div className="bg-gray-800 p-6 rounded-lg w-[450px] text-white ">
@@ -635,8 +661,26 @@ const CreateProduct = () => {
               <img
                 src={selectedImage}
                 alt="Selected image"
-                className="w-full h-full object-cover"
+                onLoad={() => {
+                  setPreviewImageLoading(false);
+                  setProcessing(false);
+                }}
+                onError={() => {
+                  setPreviewImageLoading(false);
+                  setProcessing(false);
+                }}
+                className={`w-full h-full object-cover transition-opacity duration-200 ${
+                  previewImageLoading ? "opacity-40" : "opacity-100"
+                }`}
               />
+              {previewImageLoading && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/45 text-white">
+                  <Loader2 size={28} className="animate-spin text-blue-400" />
+                  <span className="mt-3 text-sm font-medium">
+                    Processing image...
+                  </span>
+                </div>
+              )}
             </div>
             {selectedImage && (
               <div className="mt-4 space-y-2">
@@ -646,6 +690,7 @@ const CreateProduct = () => {
                   </h3>
                   {activeEffect && (
                     <button
+                      type="button"
                       onClick={resetTransformation}
                       className="text-xs text-gray-400 hover:text-white transition-all underline"
                       disabled={processing}
@@ -663,6 +708,7 @@ const CreateProduct = () => {
 
                     return (
                       <button
+                        type="button"
                         key={effect}
                         className={`p-2 rounded-md flex items-center gap-2 transition-all
               ${
