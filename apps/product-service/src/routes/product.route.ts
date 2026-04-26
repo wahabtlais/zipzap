@@ -5,6 +5,7 @@ import {
   deleteDiscountCode,
   deleteProduct,
   deleteProductImage,
+  getAllProducts,
   getCategories,
   getDiscountCodes,
   getSellerProducts,
@@ -25,4 +26,5 @@ router.post("/create-product", isAuthenticated, createProdcut);
 router.get("/get-shop-products", isAuthenticated, getSellerProducts);
 router.delete("/delete-product/:productId", isAuthenticated, deleteProduct);
 router.put("/restore-product/:productId", isAuthenticated, restoreProduct);
+router.get("/get-all-products", getAllProducts);
 export default router;

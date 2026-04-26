@@ -13,9 +13,9 @@ const ProfileIcon = (props: any) => {
       <g
         id="Page-1"
         fill="none"
-        fill-rule="evenodd"
+        fillRule="evenodd"
         stroke="none"
-        stroke-width="1"
+        strokeWidth="1"
       >
         <g
           id="Dribbble-Light-Preview"
