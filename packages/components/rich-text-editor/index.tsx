@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import ReactQuill from "react-quill-new";
+import dynamic from "next/dynamic";
 // @ts-ignore
 import "react-quill-new/dist/quill.snow.css";
 // @ts-ignore
@@ -23,6 +23,10 @@ const modules = {
     ["clean"],
   ],
 };
+
+const ReactQuill = dynamic(() => import("react-quill-new"), {
+  ssr: false,
+});
 
 export default function RichTextEditor({ value, onChange }: Props) {
   const [editorValue, setEditorValue] = useState(value);

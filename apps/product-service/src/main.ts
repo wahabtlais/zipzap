@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import swaggerUI from "swagger-ui-express";
 import { errorMiddleware } from "../../../packages/error-handler/error-middleware";
 import router from "./routes/product.route";
+import { ensureImageIndexes } from "./utils/ensure-image-indexes";
 
 const swaggerDocument = require("./swagger-output.json");
 
@@ -34,13 +35,22 @@ app.get("/docs-json", (req, res) => {
 // Routes
 app.use("/api", router);
 
-const port = process.env.PORT || 6002;
-const server = app.listen(port, () => {
-  console.log(`Product service listening at http://localhost:${port}/api`);
-  console.log(
-    `API documentation available at http://localhost:${port}/api-docs`,
-  );
-});
+const startServer = async () => {
+  await ensureImageIndexes();
 
-app.use(errorMiddleware);
-server.on("error", console.error);
+  const port = process.env.PORT || 6002;
+  const server = app.listen(port, () => {
+    console.log(`Product service listening at http://localhost:${port}/api`);
+    console.log(
+      `API documentation available at http://localhost:${port}/api-docs`,
+    );
+  });
+
+  app.use(errorMiddleware);
+  server.on("error", console.error);
+};
+
+startServer().catch((error) => {
+  console.error("Failed to start product service", error);
+  process.exit(1);
+});
