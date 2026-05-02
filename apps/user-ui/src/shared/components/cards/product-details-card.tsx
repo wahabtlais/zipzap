@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 import Ratings from "../ratings";
-import { MapPin, MessageCircle, X } from "lucide-react";
+import { Heart, MapPin, MessageCircle, ShoppingCart, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const ProductDetailsCard = ({
@@ -15,6 +15,11 @@ const ProductDetailsCard = ({
   const [activeImage, setActiveImage] = useState(0);
   const [isSelected, setIsSelected] = useState(data?.colors?.[0] || "");
   const [isSizeSelected, setIsSizeSelected] = useState(data?.sizes?.[0] || "");
+  const [quantity, setQuantity] = useState(1);
+
+  const estimatedDelivery = new Date();
+  estimatedDelivery.setDate(estimatedDelivery.getDate() + 5);
+
   const router = useRouter();
 
   return (
@@ -162,6 +167,54 @@ const ProductDetailsCard = ({
                   </div>
                 </div>
               )}
+            </div>
+            {/* Price Section */}
+            <div className="mt-5 flex items-center gap-4">
+              <h3 className="text-2xl font-semibold text-gray-900">
+                ${data?.sale_price}
+              </h3>
+              {data?.regular_price && (
+                <h3 className="text-lg text-red-600 line-through">
+                  ${data.regular_price}
+                </h3>
+              )}
+            </div>
+
+            <div className="mt-5 flex items-center gap-5">
+              <div className="flex items-center rounded-md">
+                <button
+                  className="px-3 cursor-pointer py-1 bg-gray-300 hover:bg-gray-400 text-black font-semibold rounded-l-md"
+                  onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                >
+                  -
+                </button>
+                <span className="px-4 bg-gray-100 py-1">{quantity}</span>
+                <button
+                  className="px-3 cursor-pointer py-1 bg-gray-300 hover:bg-gray-400 text-black font-semibold rounded-r-md"
+                  onClick={() => setQuantity((prev) => Math.max(1, prev + 1))}
+                >
+                  +
+                </button>
+              </div>
+              <button
+                className={`flex items-center gap-2 px-4 py-2 bg-[#ff5722] hover:bg-[#e64a19] text-white font-medium rounded-lg transition`}
+              >
+                <ShoppingCart size={18} /> Add to Cart
+              </button>
+              <button className="opacity-[.7] cursor-pointer">
+                <Heart size={30} fill="red" color="transparent" />
+              </button>
+            </div>
+            <div className="mt-3">
+              {data.stock > 0 ? (
+                <span className="text-green-600 font-semibold">In Stock</span>
+              ) : (
+                <span className="text-red-600 font-semibold">Out of Stock</span>
+              )}
+            </div>
+            <div className="mt-3 text-gray-600 text-sm">
+              Estimated Delivery:{" "}
+              <strong>{estimatedDelivery.toDateString()}</strong>
             </div>
           </div>
         </div>
