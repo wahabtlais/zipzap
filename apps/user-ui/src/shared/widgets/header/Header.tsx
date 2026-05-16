@@ -1,13 +1,30 @@
 "use client";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 import { HeartIcon, Search, ShoppingBag } from "lucide-react";
 import ProfileIcon from "@/assets/svg/ProfileIcon";
 import HeaderBottom from "./HeaderBottom";
 import useUser from "@/hooks/useUser";
+import { useStore } from "@/store";
+import axiosInstance from "@/utils/axiosInstance";
 
 const Header = () => {
   const { user, isLoading } = useUser();
+  const wishlist = useStore((state: any) => state.wishlist);
+  const cart = useStore((state: any) => state.cart);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+  const handleSearchClick = async () => {
+    if (!searchQuery.trim()) return;
+    setLoadingSuggestions(true);
+    try {
+      // const res = await axiosInstance.get(
+      // )
+    } catch (error) {}
+  };
+
   return (
     <div className="w-full bg-white">
       <div className="w-[80%] py-5 m-auto flex items-center justify-between">
@@ -66,13 +83,13 @@ const Header = () => {
             <Link href={"/wishlist"} className="relative">
               <HeartIcon height={30} width={30} />
               <div className="w-6 h-6 border-2 border-white bg-red-500 rounded-full flex items-center justify-center absolute -top-[7px] -right-[7px]">
-                <span className="text-white text-xs">0</span>
+                <span className="text-white text-xs">{wishlist?.length}</span>
               </div>
             </Link>
             <Link href={"/cart"} className="relative">
               <ShoppingBag height={28} width={28} />
               <div className="w-6 h-6 border-2 border-white bg-red-500 rounded-full flex items-center justify-center absolute -top-[7px] -right-[7px]">
-                <span className="text-white text-xs">0</span>
+                <span className="text-white text-xs">{cart?.length}</span>
               </div>
             </Link>
           </div>
