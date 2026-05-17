@@ -6,6 +6,7 @@ import { useStore } from "@/store";
 import { ShoppingBag, Trash } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 const WishlistPage = () => {
@@ -38,6 +39,8 @@ const WishlistPage = () => {
     removeFromWishlist(id, user, location, deviceInfo);
   };
 
+  const router = useRouter();
+
   return (
     <div className="w-full bg-white">
       <div className="md:w-[80%] w-[95%] mx-auto min-h-screen">
@@ -54,8 +57,16 @@ const WishlistPage = () => {
         </div>
         {/* If wishlist is empty */}
         {wishlist.length === 0 ? (
-          <div className="text-center text-gray-600 text-lg">
-            Your wishlist is empty. Start adding your favorite products!
+          <div className="flex flex-col items-center justify-center gap-6 py-20">
+            <div className="text-center text-gray-600 text-lg">
+              Your wishlist is empty. Start adding your favorite products!
+            </div>
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-all"
+              onClick={() => router.push("/")}
+            >
+              Continue Shopping
+            </button>
           </div>
         ) : (
           <div className="flex flex-col gap-10">
